@@ -65,10 +65,9 @@ class _RegisterViewState extends State<RegisterView> {
                         email: email, password: password);
                 console.log(userCredential.toString());
                 console.log('User registered successfully');
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  loginRoute,
-                  (route) => false,
-                );
+                final user = FirebaseAuth.instance.currentUser;
+                await user?.sendEmailVerification();
+                Navigator.of(context).pushNamed(verifyEmailRoute);
               } on FirebaseAuthException catch (e) {
                 if (e.code == 'weak-password') {
                   console.log('Weak Password. Try a stronger password.');

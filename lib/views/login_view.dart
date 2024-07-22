@@ -64,14 +64,24 @@ class _LoginViewState extends State<LoginView> {
                         email: email, password: password);
                 console.log(userCredential.toString());
                 console.log('User Logged in successfully');
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  homeRoute,
-                  (route) => false,
-                );
+                final user = await FirebaseAuth.instance.currentUser;
+                if (user?.emailVerified ?? false) {
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    homeRoute,
+                    (route) => false,
+                  );
+                } else {
+                  await user?.sendEmailVerification();
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    verifyEmailRoute,
+                    (route) => false,
+                  );
+                }
               } on FirebaseAuthException catch (e) {
                 if (e.code == 'invalid-credential') {
                   console.log("Invalid Credentials");
-                  await showErrorDialog(context, "Invalid Credentials");
+                  await showErrorDialog(
+                      context, "Invalid Credentials or user not registered");
                 } else {
                   await showErrorDialog(context, 'Error: ${e.code}');
                 }
