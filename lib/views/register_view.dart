@@ -1,10 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dart:developer' as console show log;
-
 import 'package:mynotesapp/constants/routes.dart';
+import 'package:mynotesapp/services/auth/auth_exceptions.dart';
+import 'package:mynotesapp/services/auth/auth_service.dart';
 import 'package:mynotesapp/utilities/show_error_dialog.dart';
-import 'package:mynotesapp/views/login_view.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -60,31 +59,29 @@ class _RegisterViewState extends State<RegisterView> {
               final email = _email.text;
               final password = _password.text;
               try {
-                final userCredential = await FirebaseAuth.instance
-                    .createUserWithEmailAndPassword(
-                        email: email, password: password);
+                final userCredential = await AuthService.firebase().createUser(
+                  email: email,
+                  password: password,
+                );
                 console.log(userCredential.toString());
                 console.log('User registered successfully');
-                final user = FirebaseAuth.instance.currentUser;
-                await user?.sendEmailVerification();
+                await AuthService.firebase().sendEmailVerification();
+                if (!context.mounted) return;
                 Navigator.of(context).pushNamed(verifyEmailRoute);
-              } on FirebaseAuthException catch (e) {
-                if (e.code == 'weak-password') {
-                  console.log('Weak Password. Try a stronger password.');
-                  await showErrorDialog(
-                      context, "Weak Password. Try a stronger password.");
-                } else if (e.code == 'invalid-email') {
-                  console.log('Invalid email');
-                  await showErrorDialog(context, "Invalid email");
-                } else if (e.code == 'email-already-in-use') {
-                  console.log('User already registered. Please login');
-                  await showErrorDialog(
-                      context, "User already registered. Please login");
-                } else {
-                  await showErrorDialog(context, 'Error: ${e.code}');
-                }
-              } catch (e) {
-                await showErrorDialog(context, e.toString());
+              } on WeakPasswordAuthException {
+                await showErrorDialog(
+                  context,
+                  "Weak Password. Try a stronger password.",
+                );
+              } on InvalidEmailAuthException {
+                await showErrorDialog(context, "Invalid email");
+              } on EmailAlreadyInUseAuthException {
+                await showErrorDialog(
+                  context,
+                  "User already registered. Please login",
+                );
+              } on GenericAuthException {
+                await showErrorDialog(context, 'Failed to register');
               }
             },
             child: const Text('Register'),

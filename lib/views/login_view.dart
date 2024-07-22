@@ -1,8 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dart:developer' as console show log;
-
 import 'package:mynotesapp/constants/routes.dart';
+import 'package:mynotesapp/services/auth/auth_exceptions.dart';
+import 'package:mynotesapp/services/auth/auth_service.dart';
 import 'package:mynotesapp/utilities/show_error_dialog.dart';
 
 class LoginView extends StatefulWidget {
@@ -59,34 +59,37 @@ class _LoginViewState extends State<LoginView> {
               final email = _email.text;
               final password = _password.text;
               try {
-                final userCredential = await FirebaseAuth.instance
-                    .signInWithEmailAndPassword(
-                        email: email, password: password);
+                final userCredential = await AuthService.firebase().logIn(
+                  email: email,
+                  password: password,
+                );
                 console.log(userCredential.toString());
                 console.log('User Logged in successfully');
-                final user = await FirebaseAuth.instance.currentUser;
-                if (user?.emailVerified ?? false) {
+                final user = AuthService.firebase().currentUser;
+                if (user?.isEmailVerified ?? false) {
+                  if (!context.mounted) return;
                   Navigator.of(context).pushNamedAndRemoveUntil(
                     homeRoute,
                     (route) => false,
                   );
                 } else {
-                  await user?.sendEmailVerification();
+                  await AuthService.firebase().sendEmailVerification();
+                  if (!context.mounted) return;
                   Navigator.of(context).pushNamedAndRemoveUntil(
                     verifyEmailRoute,
                     (route) => false,
                   );
                 }
-              } on FirebaseAuthException catch (e) {
-                if (e.code == 'invalid-credential') {
-                  console.log("Invalid Credentials");
-                  await showErrorDialog(
-                      context, "Invalid Credentials or user not registered");
-                } else {
-                  await showErrorDialog(context, 'Error: ${e.code}');
-                }
-              } catch (e) {
-                await showErrorDialog(context, e.toString());
+              } on InvalidCredentialsAuthException {
+                await showErrorDialog(
+                  context,
+                  "Invalid Credentials or user not registered",
+                );
+              } on GenericAuthException {
+                await showErrorDialog(
+                  context,
+                  'Authentication error',
+                );
               }
             },
             child: const Text('Login'),
