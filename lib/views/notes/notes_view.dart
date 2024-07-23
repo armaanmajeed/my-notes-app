@@ -3,22 +3,38 @@ import 'dart:developer' as console show log;
 import 'package:mynotesapp/constants/routes.dart';
 import 'package:mynotesapp/enums/menu_action.dart';
 import 'package:mynotesapp/services/auth/auth_service.dart';
+import 'package:mynotesapp/services/cloud/cloud_notes.dart';
+import 'package:mynotesapp/services/cloud/firebase_cloud_storage.dart';
 
-class HomeView extends StatefulWidget {
-  const HomeView({super.key});
+class NotesView extends StatefulWidget {
+  const NotesView({super.key});
 
   @override
-  State<HomeView> createState() => _HomeViewState();
+  State<NotesView> createState() => _NotesViewState();
 }
 
-class _HomeViewState extends State<HomeView> {
+class _NotesViewState extends State<NotesView> {
+  late final FirebaseCloudStorage _notesService;
+  String get userId => AuthService.firebase().currentUser!.id;
+
+  @override
+  void initState() {
+    _notesService = FirebaseCloudStorage();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home Page'),
+        title: const Text('Your Notes'),
         backgroundColor: const Color.fromRGBO(100, 50, 150, 0.4),
         actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed(newNoteRoute);
+              },
+              icon: const Icon(Icons.add)),
           PopupMenuButton<MenuAction>(
             onSelected: (value) async {
               switch (value) {
@@ -47,10 +63,34 @@ class _HomeViewState extends State<HomeView> {
           )
         ],
       ),
-      body: const Column(
-        children: [
-          Text('Welcome to home page'),
-        ],
+      body: StreamBuilder(
+        stream: _notesService.allNotes(ownerUserId: userId),
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+            case ConnectionState.active:
+              if (snapshot.hasData) {
+                final allNotes = snapshot.data as Iterable<CloudNotes>;
+                return ListView.builder(
+                  itemCount: allNotes.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text(
+                        'Tile $index',
+                        maxLines: 1,
+                        softWrap: true,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  },
+                );
+              } else {
+                return const CircularProgressIndicator();
+              }
+            default:
+              return const CircularProgressIndicator();
+          }
+        },
       ),
     );
   }
