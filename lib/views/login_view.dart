@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'dart:developer' as console show log;
-import 'package:mynotesapp/constants/routes.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mynotesapp/services/auth/auth_exceptions.dart';
-import 'package:mynotesapp/services/auth/auth_service.dart';
+import 'package:mynotesapp/services/auth/bloc/auth_bloc.dart';
+import 'package:mynotesapp/services/auth/bloc/auth_event.dart';
+import 'package:mynotesapp/services/auth/bloc/auth_state.dart';
 import 'package:mynotesapp/utilities/dialogs/error_dialog.dart';
+import 'package:mynotesapp/utilities/dialogs/loading_dialog.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -15,6 +17,7 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   late final TextEditingController _email;
   late final TextEditingController _password;
+  CloseDialog? _closeDialogHandle;
 
   @override
   void initState() {
@@ -32,78 +35,73 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-        backgroundColor: const Color.fromRGBO(100, 50, 150, 0.4),
-      ),
-      body: Column(
-        children: [
-          TextField(
-            controller: _email,
-            keyboardType: TextInputType.emailAddress,
-            enableSuggestions: false,
-            autocorrect: false,
-            decoration: const InputDecoration(hintText: 'Enter you email here'),
-          ),
-          TextField(
-            controller: _password,
-            obscureText: true,
-            enableSuggestions: false,
-            autocorrect: false,
-            decoration:
-                const InputDecoration(hintText: 'Enter your password here '),
-          ),
-          TextButton(
-            onPressed: () async {
-              final email = _email.text;
-              final password = _password.text;
-              try {
-                final userCredential = await AuthService.firebase().logIn(
-                  email: email,
-                  password: password,
-                );
-                console.log(userCredential.toString());
-                console.log('User Logged in successfully');
-                final user = AuthService.firebase().currentUser;
-                if (user?.isEmailVerified ?? false) {
-                  if (!context.mounted) return;
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    homeRoute,
-                    (route) => false,
-                  );
-                } else {
-                  await AuthService.firebase().sendEmailVerification();
-                  if (!context.mounted) return;
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    verifyEmailRoute,
-                    (route) => false,
-                  );
-                }
-              } on InvalidCredentialsAuthException {
-                await showErrorDialog(
-                  context,
-                  "Invalid Credentials or user not registered",
-                );
-              } on GenericAuthException {
-                await showErrorDialog(
-                  context,
-                  'Authentication error',
-                );
-              }
-            },
-            child: const Text('Login'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                registerRoute,
-                (route) => false,
-              );
-            },
-            child: const Text('Not registered yet? Register here!'),
-          )
-        ],
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) async {
+        if (state is AuthStateLoggedOut) {
+          final closeDialog = _closeDialogHandle;
+
+          if (!state.isLoading && closeDialog != null) {
+            closeDialog();
+            _closeDialogHandle = null;
+          } else if (state.isLoading && closeDialog == null) {
+            _closeDialogHandle = showLoadingDialog(
+              context: context,
+              text: 'Loading...',
+            );
+          }
+
+          if (state.exception is InvalidCredentialsAuthException) {
+            await showErrorDialog(
+              context,
+              "Invalid Credentials or user not registered",
+            );
+          } else if (state.exception is GenericAuthException) {
+            await showErrorDialog(
+              context,
+              'Authentication error',
+            );
+          }
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Login'),
+          backgroundColor: const Color.fromRGBO(100, 50, 150, 0.4),
+        ),
+        body: Column(
+          children: [
+            TextField(
+              controller: _email,
+              keyboardType: TextInputType.emailAddress,
+              enableSuggestions: false,
+              autocorrect: false,
+              decoration:
+                  const InputDecoration(hintText: 'Enter you email here'),
+            ),
+            TextField(
+              controller: _password,
+              obscureText: true,
+              enableSuggestions: false,
+              autocorrect: false,
+              decoration:
+                  const InputDecoration(hintText: 'Enter your password here '),
+            ),
+            TextButton(
+              onPressed: () async {
+                final email = _email.text;
+                final password = _password.text;
+                context.read<AuthBloc>().add(AuthEventLogin(email, password));
+              },
+              child: const Text('Login'),
+            ),
+            TextButton(
+              onPressed: () {
+                context.read<AuthBloc>().add(const AuthEventShouldRegister());
+              },
+              child: const Text('Not registered yet? Register here!'),
+            )
+          ],
+        ),
       ),
     );
   }

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:developer' as console show log;
 import 'package:mynotesapp/constants/routes.dart';
 import 'package:mynotesapp/enums/menu_action.dart';
 import 'package:mynotesapp/services/auth/auth_service.dart';
+import 'package:mynotesapp/services/auth/bloc/auth_bloc.dart';
+import 'package:mynotesapp/services/auth/bloc/auth_event.dart';
 import 'package:mynotesapp/services/cloud/cloud_notes.dart';
 import 'package:mynotesapp/services/cloud/firebase_cloud_storage.dart';
 import 'package:mynotesapp/utilities/dialogs/logout_dialog.dart';
@@ -43,12 +46,8 @@ class _NotesViewState extends State<NotesView> {
                 case MenuAction.logout:
                   final shouldLogout = await showLogoutDialog(context);
                   if (shouldLogout) {
-                    await AuthService.firebase().logOut();
                     if (!context.mounted) return;
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      loginRoute,
-                      (route) => false,
-                    );
+                    context.read<AuthBloc>().add(const AuthEventLogout());
                   } else {
                     console.log(shouldLogout.toString());
                   }
@@ -87,10 +86,10 @@ class _NotesViewState extends State<NotesView> {
                   },
                 );
               } else {
-                return const CircularProgressIndicator();
+                return const Center(child: CircularProgressIndicator());
               }
             default:
-              return const CircularProgressIndicator();
+              return const Center(child: CircularProgressIndicator());
           }
         },
       ),

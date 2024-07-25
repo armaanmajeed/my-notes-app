@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mynotesapp/constants/routes.dart';
-import 'package:mynotesapp/services/auth/auth_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mynotesapp/services/auth/bloc/auth_bloc.dart';
+import 'package:mynotesapp/services/auth/bloc/auth_event.dart';
 
 class VerifyEmailView extends StatefulWidget {
   const VerifyEmailView({super.key});
@@ -24,8 +25,10 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
             'If you haven\'nt received the mail. Please click the below button to send email again',
           ),
           TextButton(
-            onPressed: () async {
-              await AuthService.firebase().sendEmailVerification();
+            onPressed: () {
+              context
+                  .read<AuthBloc>()
+                  .add(const AuthEventSendEmailVerification());
             },
             child: const Text('Send email verification'),
           ),
@@ -33,13 +36,8 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
             'Restart process here by clicking below button',
           ),
           TextButton(
-            onPressed: () async {
-              await AuthService.firebase().logOut();
-              if (!context.mounted) return;
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                registerRoute,
-                (route) => false,
-              );
+            onPressed: () {
+              context.read<AuthBloc>().add(const AuthEventLogout());
             },
             child: const Text('Restart'),
           ),
@@ -48,7 +46,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
           ),
           TextButton(
             onPressed: () {
-              Navigator.of(context).pushNamed(loginRoute);
+              context.read<AuthBloc>().add(const AuthEventLogout());
             },
             child: const Text('Email Verified? Click here to login'),
           ),
