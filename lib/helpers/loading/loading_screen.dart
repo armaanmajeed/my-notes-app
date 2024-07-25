@@ -57,7 +57,7 @@ class LoadingScreen {
                 borderRadius: BorderRadius.circular(10.0),
               ),
               child: Padding(
-                padding: EdgeInsetsDirectional.all(16.0),
+                padding: const EdgeInsetsDirectional.all(16.0),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,

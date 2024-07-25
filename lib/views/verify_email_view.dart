@@ -18,39 +18,42 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
         title: const Text('Register'),
         backgroundColor: const Color.fromRGBO(100, 50, 150, 0.4),
       ),
-      body: Column(
-        children: [
-          const Text('We\'ve sent you an email to verify your account.'),
-          const Text(
-            'If you haven\'nt received the mail. Please click the below button to send email again',
-          ),
-          TextButton(
-            onPressed: () {
-              context
-                  .read<AuthBloc>()
-                  .add(const AuthEventSendEmailVerification());
-            },
-            child: const Text('Send email verification'),
-          ),
-          const Text(
-            'Restart process here by clicking below button',
-          ),
-          TextButton(
-            onPressed: () {
-              context.read<AuthBloc>().add(const AuthEventLogout());
-            },
-            child: const Text('Restart'),
-          ),
-          const Text(
-            'If you\'ve verified your account. Please click the below button to login',
-          ),
-          TextButton(
-            onPressed: () {
-              context.read<AuthBloc>().add(const AuthEventLogout());
-            },
-            child: const Text('Email Verified? Click here to login'),
-          ),
-        ],
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const Text('We\'ve sent you an email to verify your account.'),
+            const Text(
+              'If you haven\'nt received the mail. Please click the below button to send email again',
+            ),
+            TextButton(
+              onPressed: () {
+                context
+                    .read<AuthBloc>()
+                    .add(const AuthEventSendEmailVerification());
+              },
+              child: const Text('Send email verification'),
+            ),
+            const Text(
+              'Restart process here by clicking below button',
+            ),
+            TextButton(
+              onPressed: () {
+                context.read<AuthBloc>().add(const AuthEventLogout());
+              },
+              child: const Text('Restart'),
+            ),
+            const Text(
+              'If you\'ve verified your account. Please click the below button to login',
+            ),
+            TextButton(
+              onPressed: () {
+                context.read<AuthBloc>().add(const AuthEventLogout());
+              },
+              child: const Text('Email Verified? Click here to login'),
+            ),
+          ],
+        ),
       ),
     );
   }
