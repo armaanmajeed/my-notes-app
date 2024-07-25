@@ -4,33 +4,52 @@ import 'package:mynotesapp/services/auth/auth_user.dart';
 
 @immutable
 abstract class AuthState {
-  const AuthState();
+  final bool isLoading;
+  final String? loadingText;
+  const AuthState({
+    required this.isLoading,
+    this.loadingText = 'Please wait a moment',
+  });
 }
 
 class AuthStateUninitialized extends AuthState {
-  const AuthStateUninitialized();
+  const AuthStateUninitialized({
+    required super.isLoading,
+    super.loadingText,
+  });
 }
 
 class AuthStateRegistering extends AuthState {
   final Exception? exception;
-  const AuthStateRegistering({required this.exception});
+  const AuthStateRegistering({
+    required this.exception,
+    required super.isLoading,
+    super.loadingText,
+  });
 }
 
 class AuthStateLoggedIn extends AuthState {
   final AuthUser user;
-  const AuthStateLoggedIn({required this.user});
+  const AuthStateLoggedIn({
+    required this.user,
+    required super.isLoading,
+    super.loadingText,
+  });
 }
 
 class AuthStateNeedsVerification extends AuthState {
-  const AuthStateNeedsVerification();
+  const AuthStateNeedsVerification({
+    required super.isLoading,
+    super.loadingText,
+  });
 }
 
 class AuthStateLoggedOut extends AuthState with EquatableMixin {
   final Exception? exception;
-  final bool isLoading;
   const AuthStateLoggedOut({
     required this.exception,
-    required this.isLoading,
+    required super.isLoading,
+    super.loadingText,
   });
 
   @override
