@@ -30,6 +30,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     // Register Event
     on<AuthEventRegister>((event, emit) async {
+      emit(const AuthStateRegistering(
+          exception: null,
+          isLoading: true,
+          loadingText: 'Please wait, registering new user...'));
       final email = event.email;
       final password = event.password;
       try {
@@ -61,10 +65,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           email: email,
           password: password,
         );
-        emit(const AuthStateLoggedOut(
-          exception: null,
-          isLoading: false,
-        ));
         if (!user.isEmailVerified) {
           emit(const AuthStateNeedsVerification(isLoading: false));
         } else {

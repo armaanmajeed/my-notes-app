@@ -19,13 +19,16 @@ class AuthStateUninitialized extends AuthState {
   });
 }
 
-class AuthStateRegistering extends AuthState {
+class AuthStateRegistering extends AuthState with EquatableMixin {
   final Exception? exception;
   const AuthStateRegistering({
     required this.exception,
     required super.isLoading,
     super.loadingText,
   });
+
+  @override
+  List<Object?> get props => [exception, isLoading, loadingText];
 }
 
 class AuthStateLoggedIn extends AuthState {
@@ -53,5 +56,5 @@ class AuthStateLoggedOut extends AuthState with EquatableMixin {
   });
 
   @override
-  List<Object?> get props => [exception, isLoading];
+  List<Object?> get props => [exception, isLoading, loadingText];
 }
